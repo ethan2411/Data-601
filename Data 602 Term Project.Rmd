@@ -1,0 +1,108 @@
+---
+title: "Stat 602 Term Project"
+author: "Ethan Scott"
+date: "2023-10-04"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Loading Libraries Needed
+
+```{r}
+library(dplyr)
+library(glmnet)
+library(caret)
+library(Metrics)
+```
+
+## Reading Data
+
+```{r}
+myfilepath = "C://Users//ethan//Downloads//Term Project Data//listings.csv"
+listings = read.csv(myfilepath)
+head(listings)
+colnames(listings)
+```
+
+Converting price to be numeric
+
+```{r}
+# Converting price to be numeric, removing $ and , to make it possible
+listings <- listings %>%
+  mutate(price = as.numeric(gsub("[$,]", "", price)))
+
+# Check the first few rows of the updated dataframe
+head(listings)
+```
+
+#### Removing Unnecessary Columns
+
+will need to remove more columns
+
+```{r}
+#removing columns that will definitely have nothing to do with price
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "bathrooms"))] 
+
+#bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
+listings = listings[, !(colnames(listings) %in% c("bathrooms", "description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
+
+head(listings)
+colnames(listings)
+```
+
+### Feature engineering
+
+```{r}
+#maybe create a feature for how long someone has been a host? remove host_since
+#create a feature for if a host has an about section? remove host_about
+#other features too probably
+```
+
+```{r}
+sapply(listings, function(x) length(unique(x)))
+```
+
+### Regression
+
+```{r}
+# Split the data into training and testing sets
+set.seed(123)  # For reproducibility
+trainIndex = createDataPartition(listings$price, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+data_train = listings[ trainIndex,]
+data_test  = listings[-trainIndex,]
+
+# Fit a linear regression model
+model = lm(price ~. , data = data_train)
+
+# Make predictions on the test data
+predictions = predict(model, newdata = data_test)
+#summary of the model
+summary(model)
+
+rmse_value = rmse(predictions, data_test$price)
+mse_value = mse(predictions, data_test$price)
+mae_value = mae(predictions, data_test$price)
+
+# Print the evaluation metrics
+cat("Mean Squared Error (MSE):", mse_value, "\n")
+cat("Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+Ridge regression
+
+```{r}
+#this is the code from a previous example so will definitely need to adjust it a bit
+#lasso has alpha =1 and elastic net anything between 0 and 1, most commonly 0.5
+
+
+#cv.ridge <- cv.glmnet(x.ridge, y.ridge, alpha = 0, family = "binomial")
+#model.ridge <- glmnet(x.ridge, y.ridge, alpha =0, family = "binomial", lambda = cv.ridge$lambda.min)
+#x.ridge.test <- model.matrix(TenYearCHD ~., test_data)[,-1]
+#probabilities.ridge <- model.ridge %>% predict(newx = x.ridge.test)
+```
