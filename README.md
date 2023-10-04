@@ -1,2 +1,2 @@
-# Data-601
-Class work for Data 601
+# Data-601&602
+Term Projects for Data 601&602
