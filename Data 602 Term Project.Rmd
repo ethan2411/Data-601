@@ -2,7 +2,11 @@
 title: "Stat 602 Term Project"
 author: "Ethan Scott"
 date: "2023-10-04"
-output: word_document
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #### Loading Libraries Needed
 
 ```{r}
+library(ggplot2)
 library(dplyr)
 library(glmnet)
 library(caret)
@@ -37,6 +42,64 @@ listings <- listings %>%
 # Check the first few rows of the updated dataframe
 head(listings)
 ```
+
+## Visualizing Price by Neighborhood
+
+```{r}
+ggplot(data = listings, aes(x=price, y = neighbourhood_cleansed)) + geom_violin(col="blue")+ geom_boxplot(col="purple") + theme_minimal()
+```
+
+```{r}
+# Filter out the outliers so it is easier to see the graphs
+listings_filtered <- listings %>%
+  filter(price < 1500)
+
+# Create the plot using the filtered data
+ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
+  geom_boxplot(col = "purple") +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Price by Neighbourhood",
+    x = "Price",
+    y = "Neighbourhood"
+  )
+```
+
+```{r}
+# Create the plot using the filtered data
+ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
+  geom_violin(col = "purple") +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Price by Neighbourhood",
+    x = "Price",
+    y = "Neighbourhood"
+  )
+
+```
+
+## Visualizing Price by Room Type
+
+```{r}
+# Create the plot using the filtered data
+ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
+  geom_violin(col = "blue", width= 1.5)+
+  geom_boxplot(col = "purple", width=0.2) +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Price by Neighbourhood",
+    x = "Price",
+    y = "Room Type"
+  )
+```
+
+## Confidence Intervals
+
+```{r}
+
+```
+
+## Regression
 
 #### Removing Unnecessary Columns
 
@@ -76,8 +139,8 @@ trainIndex = createDataPartition(listings$price, p = .8,
 data_train = listings[ trainIndex,]
 data_test  = listings[-trainIndex,]
 
-# Fit a linear regression model
-model = lm(price ~. , data = data_train)
+# Fit a linear regression model   WILL need to change the x variables later, just have bedrooms listed until other features are decided
+model = lm(price ~bedrooms , data = data_train)
 
 # Make predictions on the test data
 predictions = predict(model, newdata = data_test)
@@ -105,4 +168,18 @@ Ridge regression
 #model.ridge <- glmnet(x.ridge, y.ridge, alpha =0, family = "binomial", lambda = cv.ridge$lambda.min)
 #x.ridge.test <- model.matrix(TenYearCHD ~., test_data)[,-1]
 #probabilities.ridge <- model.ridge %>% predict(newx = x.ridge.test)
+```
+
+## Conclusions
+
+stuff here
+
+## Citations
+
+```{r echo=TRUE}
+citation('ggplot2')
+citation('dplyr')
+citation('glmnet')
+citation('caret')
+citation('Metrics')
 ```
