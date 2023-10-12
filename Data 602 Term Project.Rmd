@@ -79,7 +79,7 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(co
 ## Visualizing Room Types by Neighbourhood
 
 ```{r}
-ggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh() + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood")
+gggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
 ```
 
 ## Confidence Intervals
