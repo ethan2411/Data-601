@@ -13,6 +13,10 @@ toc: yes
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Introduction:
+
+write some things here, will probably need to adjust formatting so that it is more like the sample projects but that's a later issue
+
 #### Loading Libraries Needed
 
 ```{r}
@@ -46,7 +50,7 @@ head(listings)
 ## Visualizing Price by Neighborhood
 
 ```{r}
-ggplot(data = listings, aes(x=price, y = neighbourhood_cleansed)) + geom_violin(col="blue")+ geom_boxplot(col="purple") + theme_minimal()
+ggplot(data = listings, aes(x=price, y = neighbourhood_cleansed)) + geom_violin(col="blue")+ geom_boxplot(col="purple")+labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 ```
 
 ```{r}
@@ -55,26 +59,13 @@ listings_filtered = listings %>%
   filter(price < 1500)
 
 # Create the plot using the filtered data
-ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
-  geom_boxplot(col = "purple") +
-  theme_minimal() +
-  labs(
-    title = "Distribution of Price by Neighbourhood",
-    x = "Price",
-    y = "Neighbourhood"
-  )
+ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) + geom_boxplot(col = "purple") +labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 ```
 
 ```{r}
 # Create the plot using the filtered data
 ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
-  geom_violin(col = "purple") +
-  theme_minimal() +
-  labs(
-    title = "Distribution of Price by Neighbourhood",
-    x = "Price",
-    y = "Neighbourhood"
-  )
+  geom_violin(col = "purple") +labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 
 ```
 
@@ -82,41 +73,29 @@ ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
 
 ```{r}
 # Create the plot using the filtered data
-ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
-  geom_violin(col = "blue", width= 1.5)+
-  geom_boxplot(col = "purple", width=0.2) +
-  theme_minimal() +
-  labs(
-    title = "Distribution of Price by Neighbourhood",
-    x = "Price",
-    y = "Room Type"
-  )
+ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(col = "blue", width= 1.5)+ geom_boxplot(col = "purple", width=0.2) + labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Room Type")
 ```
 
 ## Confidence Intervals
 
 ```{r}
-#creating the confidence intervals for each of the listings
-neighborhood_means = listings %>%
+#creating the confidence intervals and getting mean price for each neighbourhood
+neighbourhood_means = listings %>%
   group_by(neighbourhood_cleansed) %>%
   summarize(
     mean_price = mean(price, na.rm = TRUE),
     lower_ci = t.test(price, conf.level = 0.95)$conf.int[1],
     upper_ci = t.test(price, conf.level = 0.95)$conf.int[2]
   )
-head(neighborhood_means)
+head(neighbourhood_means)
+
+ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) +
+  geom_bar(stat = "identity", col = 'red', fill = 'blue', width = 0.7) +labs(title = "Neighborhood Mean Prices", x = "Neighbourhood", y = "Mean Price") + coord_flip()
+```
+
+```{r}
 #plotting the confidence intervals
-ggplot(neighborhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
-  coord_flip() +
-  labs(
-    x = "Neighborhood",
-    y = "Mean Price",
-    title = "Mean Price by Neighborhood with Confidence Intervals"
-  ) +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 10))
+ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Neighbourhood", y = "Mean Price", title = "Mean Price by Neighborhood with Confidence Intervals")
 ```
 
 ## Regression
@@ -169,6 +148,7 @@ listings$host_about_word_count = sapply(listings$host_about, function(text) {
 ```{r}
 # Extract the number of bathrooms available
 # Need to find out how to also carry over decimal and "half-bath" listings
+#if we can't do it maybe we just leave it as bathrooms_text
 listings$bathrooms_count = as.numeric(gsub("[^0-9]", "", listings$bathrooms_text))
 
 
@@ -180,7 +160,7 @@ print(unique(listings$bathrooms_text))
 
 ```{r}
 #removing columns that will definitely have nothing to do with price
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms"))] 
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "host_neighbourhood", "availability_30", "availability_60", "availability_90", "minimum_minimum_nights", "maximum_minimum_nights", "minimum_maximum_nights", "maximum_maximum_nights", "host_verifications", "number_of_reviews_ltm", "number_of_reviews_l30d", "host_response_time", "host_response_rate", "host_acceptance_rate", "maximum_nights", "minimum_nights"))] 
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
 listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
@@ -201,6 +181,11 @@ sapply(listings, function(x) length(unique(x)))
 #### Regression Modelling
 
 ```{r}
+head(listings,10)
+print(unique(listings$host_has_profile_pic))
+```
+
+```{r}
 # Split the data into training and testing sets
 set.seed(123)  # For reproducibility
 trainIndex = createDataPartition(listings$price, p = .8, 
@@ -211,7 +196,7 @@ data_test  = listings[-trainIndex,]
 
 # Fit a linear regression model  
 #WILL need to change the x variables later, once other features are decided
-model = lm(price ~beds+hostfor + accommodates, data = data_train)
+model = lm(price ~ neighbourhood_cleansed, data = data_train)
 
 # Make predictions on the test data
 predictions = predict(model, newdata = data_test)
