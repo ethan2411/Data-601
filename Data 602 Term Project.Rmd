@@ -79,7 +79,7 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(co
 ## Visualizing Room Types by Neighbourhood
 
 ```{r}
-gggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
+ggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
 ```
 
 ## Confidence Intervals
@@ -158,15 +158,25 @@ listings$host_about_word_count = sapply(listings$host_about, function(text) {
 listings$bathrooms_count = as.numeric(gsub("[^0-9]", "", listings$bathrooms_text))
 
 
+#Will need to remove this once the top part is figured out
+listings$bathrooms_count <- ifelse(is.na(listings$bathrooms_count), 0, listings$bathrooms_count)
+
 print(unique(listings$bathrooms_count))
 print(unique(listings$bathrooms_text))
+```
+
+```{r}
+# Replace empty values with "f" so there isnt empty values
+listings = listings %>%
+  mutate(host_is_superhost = ifelse(host_is_superhost == "", "f", host_is_superhost), host_has_profile_pic = ifelse(host_has_profile_pic == "", "f", host_has_profile_pic), host_identity_verified = ifelse(host_identity_verified == "", "f", host_identity_verified)
+         )
 ```
 
 #### Removing Unnecessary Columns
 
 ```{r}
 #removing columns that will definitely have nothing to do with price
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "host_neighbourhood", "availability_30", "availability_60", "availability_90", "minimum_minimum_nights", "maximum_minimum_nights", "minimum_maximum_nights", "maximum_maximum_nights", "host_verifications", "number_of_reviews_ltm", "number_of_reviews_l30d", "host_response_time", "host_response_rate", "host_acceptance_rate", "maximum_nights", "minimum_nights"))] 
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "host_neighbourhood", "availability_30", "availability_60", "availability_90", "minimum_minimum_nights", "maximum_minimum_nights", "minimum_maximum_nights", "maximum_maximum_nights", "host_verifications", "number_of_reviews_ltm", "number_of_reviews_l30d", "host_response_time", "host_response_rate", "host_acceptance_rate", "maximum_nights", "minimum_nights", "bathrooms_text", "has_availability", "first_review"))] 
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
 listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
@@ -182,54 +192,167 @@ sapply(listings, function(x) length(unique(x)))
 
 ```{r}
 #head(listings$calculated_host_listings_count_entire_homes)
+print(unique(listings$bathrooms_count))
 ```
 
 #### Regression Modelling
 
 ```{r}
 head(listings,10)
+#price is our y variable
+#For x-variables we have 15 total, there are 9 numerical and 6 categorical
 print(unique(listings$host_has_profile_pic))
 ```
 
 ```{r}
 # Split the data into training and testing sets
-set.seed(123)  # For reproducibility
+set.seed(2023)
 trainIndex = createDataPartition(listings$price, p = .8, 
                                   list = FALSE, 
                                   times = 1)
 data_train = listings[ trainIndex,]
 data_test  = listings[-trainIndex,]
 
-# Fit a linear regression model  
-#WILL need to change the x variables later, once other features are decided
-model = lm(price ~ neighbourhood_cleansed, data = data_train)
+# Fit a linear regression model
+linearmodel = lm(price ~ ., data = data_train)
 
 # Make predictions on the test data
-predictions = predict(model, newdata = data_test)
-#summary of the model
-summary(model)
+predictions = predict(linearmodel, newdata = data_test)
+summary(linearmodel)
 
+rmse_value1 = rmse(predictions, data_train$price)
+mse_value1 = mse(predictions, data_train$price)
+mae_value1 = mae(predictions, data_train$price)
 rmse_value = rmse(predictions, data_test$price)
 mse_value = mse(predictions, data_test$price)
 mae_value = mae(predictions, data_test$price)
 
 # Print the evaluation metrics
-cat("Mean Squared Error (MSE):", mse_value, "\n")
-cat("Root Mean Squared Error (RMSE):", rmse_value, "\n")
-cat("Mean Absolute Error (MAE):", mae_value, "\n")
+#The N/A's are because there are null values in bathrooms_count
+cat("Testing Mean Squared Error (MSE):", mse_value1, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value1, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value1, "\n")
+cat("Training Mean Squared Error (MSE):", mse_value, "\n")
+cat("Training Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
-#### Ridge/Lasso/Elastic Net Regression
+```{r}
+#plots look alright, big upper tail on normaility plot but rest of it is fine i think
+plot(model)
+```
+
+#### Selecting the Most Relevant Variables
+
+```{r include=FALSE}
+#Using stepwise selection to find the most important variables
+data_train = na.omit(data_train)
+model_stepwise = step(linearmodel, direction = "both")
+```
 
 ```{r}
-#this is the code from a previous example so will definitely need to adjust it a bit
-#lasso has alpha =1 and elastic net anything between 0 and 1, most commonly 0.5
+#Checking the model
+summary(model_stepwise)
+```
 
+```{r}
+plot(model_stepwise)
+```
 
-#cv.ridge = cv.glmnet(x.ridge, y.ridge, alpha = 0, family = "binomial")
-#model.ridge = glmnet(x.ridge, y.ridge, alpha =0, family = "binomial", lambda = cv.ridge$lambda.min)
-#x.ridge.test = model.matrix(TenYearCHD ~., test_data)[,-1]
-#probabilities.ridge = model.ridge %>% predict(newx = x.ridge.test)
+#### Ridge/LASSO/Elastic Net Regression
+
+##### LASSO
+
+```{r}
+dim(X_train)
+length(y_train)
+
+```
+
+```{r}
+#This one is LASSO
+#Getting train and test splits
+y_train = data_train$price
+y_test = data_test$price
+X_train = model.matrix(price ~ ., data = data_train)[, -8]#8th column is price
+X_test = model.matrix(price ~ ., data = data_test)[, -8]
+
+# Perform Lasso regression with cross-validation to select the lambda parameter
+cv.lasso = cv.glmnet(X_train, y_train, alpha = 1)
+
+# Fit the final Lasso model with the selected lambda using the training data
+lasso_model = glmnet(X_train, y_train, alpha = 1, lambda = cv.lasso$lambda.min)
+
+# Predict on the test data
+predictions = predict(lasso_model, s = cv.lasso$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(lasso_model)
+```
+
+##### Ridge
+
+```{r}
+# Perform Ridge regression with cross-validation to select the lambda parameter
+cv.ridge = cv.glmnet(X_train, y_train, alpha = 0)
+
+# Fit the final Ridge model with the selected lambda using the training data
+ridge_model = glmnet(X_train, y_train, alpha = 0, lambda = cv.ridge$lambda.min)
+
+# Predict on the test data
+predictions = predict(ridge_model, s = cv.ridge$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(ridge_model)
+```
+
+##### Elastic Net
+
+```{r}
+# Perform Elastic Net regression with cross-validation to select the lambda parameter
+cv.en = cv.glmnet(X_train, y_train, alpha = 0.5)
+
+# Fit the final Elastic Net model with the selected lambda using the training data
+en_model = glmnet(X_train, y_train, alpha = 0.5, lambda = cv.en$lambda.min)
+
+# Predict on the test data
+predictions = predict(en_model, s = cv.en$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(en_model)
 ```
 
 ## Conclusions
