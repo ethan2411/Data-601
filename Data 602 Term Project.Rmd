@@ -26,8 +26,7 @@ library(Metrics)
 ## Reading Data
 
 ```{r}
-myfilepath = "C://Users//ethan//Downloads//Term Project Data//listings.csv"
-listings = read.csv(myfilepath)
+listings = read.csv("https://raw.githubusercontent.com/ethan2411/Data-601-602/main/listings.csv")
 head(listings)
 colnames(listings)
 ```
@@ -87,9 +86,9 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
   geom_boxplot(col = "purple", width=0.2) +
   theme_minimal() +
   labs(
-    title = "Distribution of Price by Neighbourhood",
+    title = "Distribution of Price by Property Type",
     x = "Price",
-    y = "Room Type"
+    y = "Property Type"
   )
 ```
 
@@ -118,6 +117,14 @@ ggplot(neighborhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), 
   theme_minimal() +
   theme(axis.text.y = element_text(size = 10))
 ```
+
+
+
+
+
+
+
+
 
 ## Regression
 
@@ -180,7 +187,7 @@ print(unique(listings$bathrooms_text))
 
 ```{r}
 #removing columns that will definitely have nothing to do with price
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms"))] 
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms"))] 
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
 listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
@@ -203,6 +210,7 @@ sapply(listings, function(x) length(unique(x)))
 ```{r}
 # Split the data into training and testing sets
 set.seed(123)  # For reproducibility
+options(scipen = 999) # For Readability
 trainIndex = createDataPartition(listings$price, p = .8, 
                                   list = FALSE, 
                                   times = 1)
@@ -240,6 +248,30 @@ cat("Mean Absolute Error (MAE):", mae_value, "\n")
 #x.ridge.test = model.matrix(TenYearCHD ~., test_data)[,-1]
 #probabilities.ridge = model.ridge %>% predict(newx = x.ridge.test)
 ```
+
+
+
+### Anova testing (james)
+
+H0: There is no 
+
+```{r}
+options(scipen = 999)
+mean.aov = aov(price ~ accommodates*beds*bathrooms_count*number_of_reviews, data = listings)
+
+summary(mean.aov)
+```
+```{r}
+options(scipen = 999)
+mean.aov = aov(review_scores_rating ~ accommodates+bathrooms_count+price, data = listings)
+
+summary(mean.aov)
+```
+```{r}
+plot(mean.aov)
+```
+
+
 
 ## Conclusions
 
