@@ -72,7 +72,7 @@ ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
 
 ```{r}
 # Create the plot using the filtered data
-<<<<<<< HEAD
+
 ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
   geom_violin(col = "blue", width= 1.5)+
   geom_boxplot(col = "purple", width=0.2) +
@@ -82,7 +82,7 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
     x = "Price",
     y = "Property Type"
   )
-=======
+
 ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(col = "blue", width= 1.5)+ geom_boxplot(col = "purple", width=0.2) + labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Room Type")
 ```
 
@@ -90,7 +90,6 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(co
 
 ```{r}
 ggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
->>>>>>> 5dc29efbd2931b7094351e21939cae8d0775d510
 ```
 
 ## Confidence Intervals
@@ -195,11 +194,8 @@ listings = listings %>%
 
 ```{r}
 #removing columns that will definitely have nothing to do with price
-<<<<<<< HEAD
+
 listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms"))] 
-=======
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "host_neighbourhood", "availability_30", "availability_60", "availability_90", "minimum_minimum_nights", "maximum_minimum_nights", "minimum_maximum_nights", "maximum_maximum_nights", "host_verifications", "number_of_reviews_ltm", "number_of_reviews_l30d", "host_response_time", "host_response_rate", "host_acceptance_rate", "maximum_nights", "minimum_nights", "bathrooms_text", "has_availability", "first_review"))] 
->>>>>>> 5dc29efbd2931b7094351e21939cae8d0775d510
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
 listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
@@ -229,12 +225,11 @@ print(unique(listings$host_has_profile_pic))
 
 ```{r}
 # Split the data into training and testing sets
-<<<<<<< HEAD
+
 set.seed(123)  # For reproducibility
 options(scipen = 999) # For Readability
-=======
+
 set.seed(2023)
->>>>>>> 5dc29efbd2931b7094351e21939cae8d0775d510
 trainIndex = createDataPartition(listings$price, p = .8, 
                                   list = FALSE, 
                                   times = 1)
@@ -395,12 +390,14 @@ mean.aov = aov(price ~ accommodates*beds*bathrooms_count*number_of_reviews, data
 
 summary(mean.aov)
 ```
+
 ```{r}
 options(scipen = 999)
 mean.aov = aov(review_scores_rating ~ accommodates+bathrooms_count+price, data = listings)
 
 summary(mean.aov)
 ```
+
 ```{r}
 plot(mean.aov)
 ```
