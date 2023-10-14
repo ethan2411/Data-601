@@ -13,6 +13,10 @@ toc: yes
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Introduction:
+
+write some things here, will probably need to adjust formatting so that it is more like the sample projects but that's a later issue
+
 #### Loading Libraries Needed
 
 ```{r}
@@ -26,8 +30,7 @@ library(Metrics)
 ## Reading Data
 
 ```{r}
-myfilepath = "C://Users//ethan//Downloads//Term Project Data//listings.csv"
-listings = read.csv(myfilepath)
+listings = read.csv("https://raw.githubusercontent.com/ethan2411/Data-601-602/main/listings.csv")
 head(listings)
 colnames(listings)
 ```
@@ -36,7 +39,7 @@ Converting price to be numeric
 
 ```{r}
 # Converting price to be numeric, removing $ and , to make it possible
-listings <- listings %>%
+listings = listings %>%
   mutate(price = as.numeric(gsub("[$,]", "", price)))
 
 # Check the first few rows of the updated dataframe
@@ -46,35 +49,22 @@ head(listings)
 ## Visualizing Price by Neighborhood
 
 ```{r}
-ggplot(data = listings, aes(x=price, y = neighbourhood_cleansed)) + geom_violin(col="blue")+ geom_boxplot(col="purple") + theme_minimal()
+ggplot(data = listings, aes(x=price, y = neighbourhood_cleansed)) + geom_violin(col="blue")+ geom_boxplot(col="purple")+labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 ```
 
 ```{r}
 # Filter out the outliers so it is easier to see the graphs
-listings_filtered <- listings %>%
+listings_filtered = listings %>%
   filter(price < 1500)
 
 # Create the plot using the filtered data
-ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
-  geom_boxplot(col = "purple") +
-  theme_minimal() +
-  labs(
-    title = "Distribution of Price by Neighbourhood",
-    x = "Price",
-    y = "Neighbourhood"
-  )
+ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) + geom_boxplot(col = "purple") +labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 ```
 
 ```{r}
 # Create the plot using the filtered data
 ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
-  geom_violin(col = "purple") +
-  theme_minimal() +
-  labs(
-    title = "Distribution of Price by Neighbourhood",
-    x = "Price",
-    y = "Neighbourhood"
-  )
+  geom_violin(col = "purple") +labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Neighbourhood")
 
 ```
 
@@ -82,93 +72,337 @@ ggplot(data = listings_filtered, aes(x = price, y = neighbourhood_cleansed)) +
 
 ```{r}
 # Create the plot using the filtered data
+
 ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
   geom_violin(col = "blue", width= 1.5)+
   geom_boxplot(col = "purple", width=0.2) +
   theme_minimal() +
   labs(
-    title = "Distribution of Price by Neighbourhood",
+    title = "Distribution of Price by Property Type",
     x = "Price",
-    y = "Room Type"
+    y = "Property Type"
   )
+
+ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(col = "blue", width= 1.5)+ geom_boxplot(col = "purple", width=0.2) + labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Room Type")
+```
+
+## Visualizing Room Types by Neighbourhood
+
+```{r}
+ggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
 ```
 
 ## Confidence Intervals
 
 ```{r}
+#creating the confidence intervals and getting mean price for each neighbourhood
+neighbourhood_means = listings %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(
+    mean_price = mean(price, na.rm = TRUE),
+    lower_ci = t.test(price, conf.level = 0.95)$conf.int[1],
+    upper_ci = t.test(price, conf.level = 0.95)$conf.int[2]
+  )
+head(neighbourhood_means)
 
+ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) +
+  geom_bar(stat = "identity", col = 'red', fill = 'blue', width = 0.7) +labs(title = "Neighborhood Mean Prices", x = "Neighbourhood", y = "Mean Price") + coord_flip()
 ```
+
+```{r}
+#plotting the confidence intervals
+ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Neighbourhood", y = "Mean Price", title = "Mean Price by Neighborhood with Confidence Intervals")
+```
+
+
+
+
+
+
+
+
 
 ## Regression
 
-#### Removing Unnecessary Columns
+### Data Cleaning
 
-will need to remove more columns
+```{r}
+# Seeing what columns have too many missing values, we will remove these
+missing_values = is.na(listings)
+missing_counts = colSums(missing_values)
+columns5000_missing = missing_counts[missing_counts >5000]
+print(columns5000_missing)
+```
+
+#### Feature Engineering
+
+```{r}
+#create a feature for if a host has an about section? remove host_about
+#other features too probably
+
+#maybe how long someone has been a host will affect price?
+listings$host_since = as.Date(listings$host_since)
+listings$hostfor = as.numeric(difftime(Sys.Date(), listings$host_since, units = "days"))
+
+sum(is.na(listings$hostfor))
+# fill missing values in 'hostfor' with the mean
+mean_hostfor = mean(listings$hostfor, na.rm = TRUE)
+listings$hostfor[is.na(listings$hostfor)] = mean_hostfor
+sum(is.na(listings$hostfor))
+```
+
+```{r}
+# fill missing 'beds' values with the median 
+# median is 2 and mean is 2.1 something
+median_beds = median(listings$beds, na.rm = TRUE)
+listings$beds[is.na(listings$beds)] = median_beds
+```
+
+```{r}
+#maybe if the host includes an in depth summary about themselves it will affect price?
+listings$host_about_word_count = sapply(listings$host_about, function(text) {
+  words = unlist(strsplit(text, " "))
+  return(length(words))
+})
+
+#same for a description of the place?
+
+```
+
+```{r}
+# Extract the number of bathrooms available
+# Need to find out how to also carry over decimal and "half-bath" listings
+#if we can't do it maybe we just leave it as bathrooms_text
+listings$bathrooms_count = as.numeric(gsub("[^0-9]", "", listings$bathrooms_text))
+
+
+#Will need to remove this once the top part is figured out
+listings$bathrooms_count <- ifelse(is.na(listings$bathrooms_count), 0, listings$bathrooms_count)
+
+print(unique(listings$bathrooms_count))
+print(unique(listings$bathrooms_text))
+```
+
+```{r}
+# Replace empty values with "f" so there isnt empty values
+listings = listings %>%
+  mutate(host_is_superhost = ifelse(host_is_superhost == "", "f", host_is_superhost), host_has_profile_pic = ifelse(host_has_profile_pic == "", "f", host_has_profile_pic), host_identity_verified = ifelse(host_identity_verified == "", "f", host_identity_verified)
+         )
+```
+
+#### Removing Unnecessary Columns
 
 ```{r}
 #removing columns that will definitely have nothing to do with price
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "bathrooms"))] 
+
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms"))] 
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
-listings = listings[, !(colnames(listings) %in% c("bathrooms", "description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
+listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
 
 head(listings)
 colnames(listings)
-```
-
-### Feature engineering
-
-```{r}
-#maybe create a feature for how long someone has been a host? remove host_since
-#create a feature for if a host has an about section? remove host_about
-#other features too probably
+#head(listings$beds)
 ```
 
 ```{r}
 sapply(listings, function(x) length(unique(x)))
 ```
 
-### Regression
+```{r}
+#head(listings$calculated_host_listings_count_entire_homes)
+print(unique(listings$bathrooms_count))
+```
+
+#### Regression Modelling
+
+```{r}
+head(listings,10)
+#price is our y variable
+#For x-variables we have 15 total, there are 9 numerical and 6 categorical
+print(unique(listings$host_has_profile_pic))
+```
 
 ```{r}
 # Split the data into training and testing sets
+
 set.seed(123)  # For reproducibility
+options(scipen = 999) # For Readability
+
+set.seed(2023)
 trainIndex = createDataPartition(listings$price, p = .8, 
                                   list = FALSE, 
                                   times = 1)
 data_train = listings[ trainIndex,]
 data_test  = listings[-trainIndex,]
 
-# Fit a linear regression model   WILL need to change the x variables later, just have bedrooms listed until other features are decided
-model = lm(price ~bedrooms , data = data_train)
+# Fit a linear regression model
+linearmodel = lm(price ~ ., data = data_train)
 
 # Make predictions on the test data
-predictions = predict(model, newdata = data_test)
-#summary of the model
-summary(model)
+predictions = predict(linearmodel, newdata = data_test)
+summary(linearmodel)
 
+rmse_value1 = rmse(predictions, data_train$price)
+mse_value1 = mse(predictions, data_train$price)
+mae_value1 = mae(predictions, data_train$price)
 rmse_value = rmse(predictions, data_test$price)
 mse_value = mse(predictions, data_test$price)
 mae_value = mae(predictions, data_test$price)
 
 # Print the evaluation metrics
-cat("Mean Squared Error (MSE):", mse_value, "\n")
-cat("Root Mean Squared Error (RMSE):", rmse_value, "\n")
-cat("Mean Absolute Error (MAE):", mae_value, "\n")
+#The N/A's are because there are null values in bathrooms_count
+cat("Testing Mean Squared Error (MSE):", mse_value1, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value1, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value1, "\n")
+cat("Training Mean Squared Error (MSE):", mse_value, "\n")
+cat("Training Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
 ```
-
-Ridge regression
 
 ```{r}
-#this is the code from a previous example so will definitely need to adjust it a bit
-#lasso has alpha =1 and elastic net anything between 0 and 1, most commonly 0.5
-
-
-#cv.ridge <- cv.glmnet(x.ridge, y.ridge, alpha = 0, family = "binomial")
-#model.ridge <- glmnet(x.ridge, y.ridge, alpha =0, family = "binomial", lambda = cv.ridge$lambda.min)
-#x.ridge.test <- model.matrix(TenYearCHD ~., test_data)[,-1]
-#probabilities.ridge <- model.ridge %>% predict(newx = x.ridge.test)
+#plots look alright, big upper tail on normaility plot but rest of it is fine i think
+plot(model)
 ```
+
+#### Selecting the Most Relevant Variables
+
+```{r include=FALSE}
+#Using stepwise selection to find the most important variables
+data_train = na.omit(data_train)
+model_stepwise = step(linearmodel, direction = "both")
+```
+
+```{r}
+#Checking the model
+summary(model_stepwise)
+```
+
+```{r}
+plot(model_stepwise)
+```
+
+#### Ridge/LASSO/Elastic Net Regression
+
+##### LASSO
+
+```{r}
+dim(X_train)
+length(y_train)
+
+```
+
+```{r}
+#This one is LASSO
+#Getting train and test splits
+y_train = data_train$price
+y_test = data_test$price
+X_train = model.matrix(price ~ ., data = data_train)[, -8]#8th column is price
+X_test = model.matrix(price ~ ., data = data_test)[, -8]
+
+# Perform Lasso regression with cross-validation to select the lambda parameter
+cv.lasso = cv.glmnet(X_train, y_train, alpha = 1)
+
+# Fit the final Lasso model with the selected lambda using the training data
+lasso_model = glmnet(X_train, y_train, alpha = 1, lambda = cv.lasso$lambda.min)
+
+# Predict on the test data
+predictions = predict(lasso_model, s = cv.lasso$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(lasso_model)
+```
+
+##### Ridge
+
+```{r}
+# Perform Ridge regression with cross-validation to select the lambda parameter
+cv.ridge = cv.glmnet(X_train, y_train, alpha = 0)
+
+# Fit the final Ridge model with the selected lambda using the training data
+ridge_model = glmnet(X_train, y_train, alpha = 0, lambda = cv.ridge$lambda.min)
+
+# Predict on the test data
+predictions = predict(ridge_model, s = cv.ridge$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(ridge_model)
+```
+
+##### Elastic Net
+
+```{r}
+# Perform Elastic Net regression with cross-validation to select the lambda parameter
+cv.en = cv.glmnet(X_train, y_train, alpha = 0.5)
+
+# Fit the final Elastic Net model with the selected lambda using the training data
+en_model = glmnet(X_train, y_train, alpha = 0.5, lambda = cv.en$lambda.min)
+
+# Predict on the test data
+predictions = predict(en_model, s = cv.en$lambda.min, newx = X_test)
+
+# Evaluate the model on the test data (e.g., calculate RMSE, MSE, MAE)
+rmse_value = sqrt(mean((predictions - y_test)^2))
+mse_value = mean((predictions - y_test)^2)
+mae_value = mean(abs(predictions - y_test))
+
+# Print the evaluation metrics
+cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
+cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
+```
+
+```{r}
+coefficients(en_model)
+```
+
+
+
+### Anova testing (james)
+
+H0: There is no 
+
+```{r}
+options(scipen = 999)
+mean.aov = aov(price ~ accommodates*beds*bathrooms_count*number_of_reviews, data = listings)
+
+summary(mean.aov)
+```
+
+```{r}
+options(scipen = 999)
+mean.aov = aov(review_scores_rating ~ accommodates+bathrooms_count+price, data = listings)
+
+summary(mean.aov)
+```
+
+```{r}
+plot(mean.aov)
+```
+
+
 
 ## Conclusions
 
