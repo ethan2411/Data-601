@@ -130,7 +130,7 @@ ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price))
 ```
 ```{r}
 #plotting the confidence intervals
-ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Room Type", y = "Mean Price", title = "Mean Price by Room Type with Confidence Intervals")
+ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Room Type", y = "Mean Price ($AUD)", title = "Mean Price by Room Type with Confidence Intervals")
 ```
 
 ```{r}
@@ -140,22 +140,8 @@ room_type_means
 
 
 
-```{r}
-anova_result <- aov(price ~ neighbourhood_cleansed + room_type, data = listings)
-
-summary(anova_result)
-
-# Perform ANOVA
-#anova_result <- aov(mean_prices ~ neighborhoods, data = data)
 
 ```
-
-```{r}
-plot(anova_result)
-
-```
-
-
 
 ## Regression
 
@@ -415,27 +401,26 @@ coefficients(en_model)
 
 
 
-### Anova testing (james)
 
-H0: There is no 
 
-```{r}
-options(scipen = 999)
-mean.aov = aov(price ~ accommodates*beds*bathrooms_count*number_of_reviews, data = listings)
 
-summary(mean.aov)
-```
 
-```{r}
-options(scipen = 999)
-mean.aov = aov(review_scores_rating ~ accommodates+bathrooms_count+price, data = listings)
 
-summary(mean.aov)
-```
 
-```{r}
-plot(mean.aov)
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
