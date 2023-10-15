@@ -83,13 +83,13 @@ ggplot(data = listings_filtered, aes(x = price, y = room_type)) +
     y = "Property Type"
   )
 
-ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(col = "blue", width= 1.5)+ geom_boxplot(col = "purple", width=0.2) + labs(title = "Distribution of Price by Neighbourhood", x = "Price", y = "Room Type")
+ggplot(data = listings_filtered, aes(x = price, y = room_type)) + geom_violin(col = "blue", width= 1.5)+ geom_boxplot(col = "purple", width=0.2) + labs(title = "Distribution of Price by Room Type", x = "Price", y = "Room Type")
 ```
 
 ## Visualizing Room Types by Neighbourhood
 
 ```{r}
-ggplot(data = listings, aes(y=neighbourhood, fill=room_type)) + ylab("Neighbourhood") + geom_barh(col="black", size=0.3) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()
+ggplot(data = listings, aes(y=neighbourhood_cleansed, fill=room_type)) + ylab("Neighbourhood") + geom_bar(color="black", width = 0.8) + scale_fill_manual(values=c("plum", "purple", "blue", "navy")) + ggtitle("Distribution of Room Types per Neighbourhood") + theme_minimal()  
 ```
 
 ## Confidence Intervals
@@ -114,11 +114,46 @@ ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price),
 ggplot(neighbourhood_means, aes(x = reorder(neighbourhood_cleansed, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Neighbourhood", y = "Mean Price", title = "Mean Price by Neighborhood with Confidence Intervals")
 ```
 
+```{r}
+#creating the confidence intervals and getting mean price for each neighbourhood
+room_type_means = listings %>%
+  group_by(room_type) %>%
+  summarize(
+    mean_price = mean(price, na.rm = TRUE),
+    lower_ci = t.test(price, conf.level = 0.95)$conf.int[1],
+    upper_ci = t.test(price, conf.level = 0.95)$conf.int[2]
+  )
+head(room_type_means)
+
+ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) +
+  geom_bar(stat = "identity", col = 'red', fill = 'blue', width = 0.7) +labs(title = "Room Type Mean Prices", x = "Room Type", y = "Mean Price") + coord_flip()
+```
+```{r}
+#plotting the confidence intervals
+ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Room Type", y = "Mean Price", title = "Mean Price by Room Type with Confidence Intervals")
+```
+
+```{r}
+room_type_means
+
+```
 
 
 
+```{r}
+anova_result <- aov(price ~ neighbourhood_cleansed + room_type, data = listings)
 
+summary(anova_result)
 
+# Perform ANOVA
+#anova_result <- aov(mean_prices ~ neighborhoods, data = data)
+
+```
+
+```{r}
+plot(anova_result)
+
+```
 
 
 
