@@ -161,7 +161,6 @@ plot(neighbourhood.aov, which = c(2,3))
 
 ```
 
-
 #### Mean Prices by Room_Type
 
 ```{r}
@@ -174,12 +173,11 @@ summary(rooms.aov)
 #This shows exactly which rooms are different in price and which are not
 PostHocTest(rooms.aov, method="lsd")
 ```
+
 ```{r}
 plot(rooms.aov, which = c(2,3))
 
 ```
-
-
 
 ## Regression
 
@@ -221,9 +219,6 @@ listings$host_about_word_count = sapply(listings$host_about, function(text) {
   words = unlist(strsplit(text, " "))
   return(length(words))
 })
-
-#same for a description of the place?
-
 ```
 
 ```{r}
@@ -308,9 +303,6 @@ mae_value = mae(predictions, data_test$price)
 
 # Print the evaluation metrics
 #The N/A's are because there are null values in bathrooms_count
-cat("Testing Mean Squared Error (MSE):", mse_value1, "\n")
-cat("Testing Root Mean Squared Error (RMSE):", rmse_value1, "\n")
-cat("Testing Mean Absolute Error (MAE):", mae_value1, "\n")
 cat("Training Mean Squared Error (MSE):", mse_value, "\n")
 cat("Training Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
@@ -339,11 +331,6 @@ plot(model_stepwise)
 #### Ridge/LASSO/Elastic Net Regression
 
 ##### LASSO
-
-```{r}
-ncol(X_train)
-ncol(X_test)
-```
 
 ```{r}
 #This one is LASSO
