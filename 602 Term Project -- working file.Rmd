@@ -258,10 +258,11 @@ data_test  = listings[-trainIndex,]
 ```{r}
 # Fit a linear regression model
 linearmodel = lm(price ~ ., data = data_train)
+summary(linearmodel)
 
 # Make predictions on the test data
 predictions = predict(linearmodel, newdata = data_test)
-summary(linearmodel)
+
 
 rmse_value1 = rmse(predictions, data_train$price)
 mse_value1 = mse(predictions, data_train$price)
