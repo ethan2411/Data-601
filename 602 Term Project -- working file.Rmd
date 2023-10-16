@@ -25,6 +25,7 @@ library(dplyr)
 library(glmnet)
 library(caret)
 library(Metrics)
+library(DescTools)
 ```
 
 ## Reading Data
@@ -137,6 +138,34 @@ ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price))
 ```{r}
 room_type_means
 
+```
+
+## Confidence Intervals for Comparisons of Means
+
+#### Mean prices by Neighbourhood
+
+```{r}
+#P-value is tiny. This means we reject H_0 and conclude that there is a difference in mean prices throughout the neighbourhoods
+neighbourhood.aov = aov(price~neighbourhood_cleansed, data = listings)
+summary(neighbourhood.aov)
+```
+
+```{r}
+#This we may or may not use. its the confidence intervals for every single comparison. We can probably remove the output and just go through it and see if there are any neighbourhoods that are significantly different than all others
+PostHocTest(neighbourhood.aov, method="lsd")
+```
+
+#### Mean Prices by Room_Type
+
+```{r}
+#P-value shows there is a significant difference in mean price by room type
+rooms.aov = aov(price~room_type, data = listings)
+summary(rooms.aov)
+```
+
+```{r}
+#This shows exactly which rooms are different in price and which are not
+PostHocTest(rooms.aov, method="lsd")
 ```
 
 ## Regression
