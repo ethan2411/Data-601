@@ -326,6 +326,7 @@ data_test  = listings[-trainIndex,]
 # Fit a linear regression model
 linearmodel = lm(price ~ ., data = data_train)
 summary.linearmodel = summary(linearmodel)
+summary.linearmodel
 
 # Make predictions on the test data
 predictions = predict(linearmodel, newdata = data_test)
@@ -357,8 +358,12 @@ linearmodel.df
 significant.linearmodel.df = filter(linearmodel.df, p.value < 0.05)
 head(significant.linearmodel.df,22)
 ```
+```{r}
+print(listings[4,])
+linear.predict = predict(linearmodel, data.frame(listings[4,]), interval = 'predict')
+linear.predict
 
-
+```
 
 ```{r}
 #plots look alright, big upper tail on normaility plot but rest of it is fine i think
@@ -383,7 +388,11 @@ df.stepwise.significant = filter(df.stepwise, p.value < 0.05)
 df.stepwise.significant
 
 ```
-
+```{r}
+print(listings[3,])
+stepwise.predict = predict(model_stepwise, data.frame(listings[4,]), interval = "predict")
+stepwise.predict
+```
 
 ```{r}
 plot(model_stepwise)
@@ -425,6 +434,12 @@ cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```{r}
 coefficients(lasso_model)
 ```
+
+```{r}
+lasso.predict = predict(lasso_model, data.frame(listings[2,]), interval = "predict")
+lasso.predict
+```
+
 
 ```{r}
 # Perform Ridge regression with cross-validation to select the lambda parameter
