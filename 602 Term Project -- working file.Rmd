@@ -25,6 +25,7 @@ library(dplyr)
 library(glmnet)
 library(caret)
 library(Metrics)
+library(DescTools)
 ```
 
 ## Reading Data
@@ -128,6 +129,7 @@ head(room_type_means)
 ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) +
   geom_bar(stat = "identity", col = 'red', fill = 'blue', width = 0.7) +labs(title = "Room Type Mean Prices", x = "Room Type", y = "Mean Price ($AUD)") + coord_flip()
 ```
+
 ```{r}
 #plotting the confidence intervals
 ggplot(room_type_means, aes(x = reorder(room_type, mean_price), y = mean_price)) + geom_point() + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) + coord_flip() + labs(x = "Room Type", y = "Mean Price ($AUD)", title = "Mean Price by Room Type with Confidence Intervals")
@@ -138,10 +140,37 @@ room_type_means
 
 ```
 
+## Confidence Intervals for Comparisons of Means
+
+#### Mean prices by Neighbourhood
+
+```{r}
+#P-value is tiny. This means we reject H_0 and conclude that there is a difference in mean prices throughout the neighbourhoods
+neighbourhood.aov = aov(price~neighbourhood_cleansed, data = listings)
+summary(neighbourhood.aov)
+```
+
+```{r}
+#This we may or may not use. its the confidence intervals for every single comparison. We can probably remove the output and just go through it and see if there are any neighbourhoods that are significantly different than all others
+PostHocTest(neighbourhood.aov, method="lsd")
+```
+
+#### Mean Prices by Room_Type
+
+```{r}
+#P-value shows there is a significant difference in mean price by room type
+rooms.aov = aov(price~room_type, data = listings)
+summary(rooms.aov)
+```
+
+```{r}
+#This shows exactly which rooms are different in price and which are not
+PostHocTest(rooms.aov, method="lsd")
+```
+
 ## Regression
 
 ### Data Cleaning
-
 
 ```{r}
 # Seeing what columns have too many missing values, we will remove these
@@ -173,8 +202,6 @@ median_beds = median(listings$beds, na.rm = TRUE)
 listings$beds[is.na(listings$beds)] = median_beds
 ```
 
-
-
 ```{r}
 #maybe if the host includes an in depth summary about themselves it will affect price?
 listings$host_about_word_count = sapply(listings$host_about, function(text) {
@@ -185,7 +212,6 @@ listings$host_about_word_count = sapply(listings$host_about, function(text) {
 #same for a description of the place?
 
 ```
-
 
 ```{r}
 # Extract the number of bathrooms available
@@ -201,7 +227,6 @@ print(unique(listings$bathrooms_count))
 print(unique(listings$bathrooms_text))
 ```
 
-
 ```{r}
 # Replace empty values with "f" so there isnt empty values
 listings = listings %>%
@@ -209,11 +234,10 @@ listings = listings %>%
          )
 ```
 
-
 ```{r}
 #removing columns that will definitely have nothing to do with price
 
-listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", 'host_acceptance_rate', "host_total_listings_count", "last_review", "host_name", "host_response_rate", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "first_review", "host_identity_verified", "host_verfications", "host_has_profile_pic", "host_neighbourhood", "host_verfications", "bathrooms_text"))] 
+listings = listings[, !(colnames(listings) %in% c("listing_url", "scrape_id", "last_scraped", "source", "picture_url", "host_id", "host_url", "host_thumbnail_url", "host_picture_url", "neighbourhood", "neighbourhood_group_cleansed", "license", "calendar_last_scraped", "calendar_updated", "property_type", "bedrooms", "host_since", "host_location", "host_about", "bathrooms_test", "bathrooms", "review_scores_communication", "review_scores_location", "review_scores_value", "reviews_per_month", "review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "host_listings_count", "host_total_listings_count", "last_review", "host_name", "calculated_host_listings_count", "calculated_host_listings_count_entire_homes", "calculated_host_listings_count_private_rooms", "calculated_host_listings_count_shared_rooms", "host_neighbourhood", "availability_30", "availability_60", "availability_90", "minimum_minimum_nights", "maximum_minimum_nights", "minimum_maximum_nights", "maximum_maximum_nights", "host_verifications", "number_of_reviews_ltm", "number_of_reviews_l30d", "host_response_time", "host_response_rate", "host_acceptance_rate", "maximum_nights", "minimum_nights", "bathrooms_text", "has_availability", "first_review"))] 
 
 #bathrooms was removed at end because only bathroom_text will be needed, will probably have to do some feature engineering for lots of these variables
 listings = listings[, !(colnames(listings) %in% c("description", "neighborhood_overview", "latitude", "longitude", "name", "amenities", "id"))] 
@@ -222,7 +246,6 @@ head(listings)
 colnames(listings)
 #head(listings$beds)
 ```
-
 
 ```{r}
 sapply(listings, function(x) length(unique(x)))
@@ -239,7 +262,6 @@ head(listings,10)
 #For x-variables we have 15 total, there are 9 numerical and 6 categorical
 print(unique(listings$host_has_profile_pic))
 ```
-
 
 ```{r}
 # Split the data into training and testing sets
@@ -300,14 +322,14 @@ summary(model_stepwise)
 ```{r}
 plot(model_stepwise)
 ```
+
 #### Ridge/LASSO/Elastic Net Regression
 
 ##### LASSO
 
 ```{r}
-dim(X_train)
-length(y_train)
-
+ncol(X_train)
+ncol(X_test)
 ```
 
 ```{r}
@@ -338,11 +360,9 @@ cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
-
 ```{r}
 coefficients(lasso_model)
 ```
-
 
 ```{r}
 # Perform Ridge regression with cross-validation to select the lambda parameter
@@ -369,7 +389,6 @@ cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 coefficients(ridge_model)
 ```
 
-
 ```{r}
 # Perform Elastic Net regression with cross-validation to select the lambda parameter
 cv.en = cv.glmnet(X_train, y_train, alpha = 0.5)
@@ -391,12 +410,9 @@ cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
-
-
 ```{r}
 coefficients(en_model)
 ```
-
 
 ## Conclusions
 
@@ -411,31 +427,3 @@ citation('glmnet')
 citation('caret')
 citation('Metrics')
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
