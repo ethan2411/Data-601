@@ -363,10 +363,6 @@ plot(model_stepwise)
 
 ##### LASSO
 
-```{r}
-ncol(X_train)
-ncol(X_test)
-```
 
 ```{r}
 #This one is LASSO
