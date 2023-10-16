@@ -389,8 +389,7 @@ linear.predict
 <<<<<<< HEAD
 ```
 
-=======
->>>>>>> 34a5d6366bd013b3ee3f7a32624a5ad0b64532ec
+
 ```{r}
 #plots look alright, big upper tail on normaility plot but rest of it is fine i think
 plot(linearmodel)
@@ -415,14 +414,13 @@ df.stepwise.significant = filter(df.stepwise, p.value < 0.05)
 df.stepwise.significant
 
 ```
-<<<<<<< HEAD
+
 ```{r}
 print(listings[3,])
 stepwise.predict = predict(model_stepwise, data.frame(listings[4,]), interval = "predict")
 stepwise.predict
 ```
-=======
->>>>>>> 34a5d6366bd013b3ee3f7a32624a5ad0b64532ec
+
 
 ```{r}
 plot(model_stepwise)
