@@ -157,6 +157,36 @@ PostHocTest(neighbourhood.aov, method="lsd")
 
 ```
 
+```{r}
+compare = round(cbind(
+    pval= PostHocTest(neighbourhood.aov, method="lsd")$neighbourhood_cleansed[,"pval"]
+),6)
+
+neighbourhood.diff = data.frame(compare)
+head(neighbourhood.diff,10)
+
+#which neighbourhoods have a significant difference and which do not
+diff = subset(neighbourhood.diff, pval<0.05)
+diff
+nodiff = subset(neighbourhood.diff, pval >=0.05)
+nodiff
+
+#each neighbourhood is being compared to 37 other neighbourhoods
+#703 total comparisons
+nrow(neighbourhood.diff)
+#340 have differences
+nrow(diff)
+#363 have no significant differences
+nrow(nodiff)
+
+#Next step see how many neighbourhoods each is significantly different than?
+#Ex. how many neighbourhoods is ashfield significantly different than?
+
+
+```
+
+
+
 
 ```{r}
 plot(neighbourhood.aov, which = c(2,3))
@@ -321,7 +351,7 @@ cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
 ```{r}
 
 library(broom) #converting the summary of the linear model to a dataframe. 
-linearmodel.df = tidy(sum.linearmodel)
+linearmodel.df = tidy(summary.linearmodel)
 linearmodel.df
 
 significant.linearmodel.df = filter(linearmodel.df, p.value < 0.05)
