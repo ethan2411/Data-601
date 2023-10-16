@@ -154,7 +154,39 @@ summary(neighbourhood.aov)
 ```{r}
 #This we may or may not use. its the confidence intervals for every single comparison. We can probably remove the output and just go through it and see if there are any neighbourhoods that are significantly different than all others
 PostHocTest(neighbourhood.aov, method="lsd")
+
 ```
+
+```{r}
+compare = round(cbind(
+    pval= PostHocTest(neighbourhood.aov, method="lsd")$neighbourhood_cleansed[,"pval"]
+),6)
+
+neighbourhood.diff = data.frame(compare)
+head(neighbourhood.diff,10)
+
+#which neighbourhoods have a significant difference and which do not
+diff = subset(neighbourhood.diff, pval<0.05)
+diff
+nodiff = subset(neighbourhood.diff, pval >=0.05)
+nodiff
+
+#each neighbourhood is being compared to 37 other neighbourhoods
+#703 total comparisons
+nrow(neighbourhood.diff)
+#340 have differences
+nrow(diff)
+#363 have no significant differences
+nrow(nodiff)
+
+#Next step see how many neighbourhoods each is significantly different than?
+#Ex. how many neighbourhoods is ashfield significantly different than?
+
+
+```
+
+
+
 
 ```{r}
 plot(neighbourhood.aov, which = c(2,3))
@@ -293,7 +325,7 @@ data_test  = listings[-trainIndex,]
 ```{r}
 # Fit a linear regression model
 linearmodel = lm(price ~ ., data = data_train)
-summary(linearmodel)
+summary.linearmodel = summary(linearmodel)
 
 # Make predictions on the test data
 predictions = predict(linearmodel, newdata = data_test)
@@ -317,6 +349,18 @@ cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
 ```{r}
+
+library(broom) #converting the summary of the linear model to a dataframe. 
+linearmodel.df = tidy(summary.linearmodel)
+linearmodel.df
+
+significant.linearmodel.df = filter(linearmodel.df, p.value < 0.05)
+head(significant.linearmodel.df,22)
+```
+
+
+
+```{r}
 #plots look alright, big upper tail on normaility plot but rest of it is fine i think
 plot(linearmodel)
 ```
@@ -331,6 +375,15 @@ model_stepwise = step(linearmodel, direction = "both")
 #Checking the model
 summary(model_stepwise)
 ```
+```{r}
+df.stepwise = tidy(summary(model_stepwise))
+df.stepwise
+
+df.stepwise.significant = filter(df.stepwise, p.value < 0.05)
+df.stepwise.significant
+
+```
+
 
 ```{r}
 plot(model_stepwise)
@@ -340,10 +393,6 @@ plot(model_stepwise)
 
 ##### LASSO
 
-```{r}
-ncol(X_train)
-ncol(X_test)
-```
 
 ```{r}
 #This one is LASSO
