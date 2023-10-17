@@ -384,13 +384,13 @@ linearmodel.df
 significant.linearmodel.df = filter(linearmodel.df, p.value < 0.05)
 head(significant.linearmodel.df,22)
 ```
-
 ```{r}
 print(listings[4,])
 linear.predict = predict(linearmodel, data.frame(listings[4,]), interval = 'predict')
 linear.predict
 
 ```
+
 
 ```{r}
 #plots look alright, big upper tail on normaility plot but rest of it is fine i think
@@ -433,10 +433,10 @@ df.stepwise.significant
 ```
 
 ```{r}
-print(listings[3,])
 stepwise.predict = predict(model_stepwise, data.frame(listings[4,]), interval = "predict")
 stepwise.predict
 ```
+
 
 ```{r}
 plot(model_stepwise)
@@ -477,6 +477,7 @@ cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```{r}
 coefficients(lasso_model)
 ```
+
 
 ```{r}
 # for LASSO
@@ -533,6 +534,7 @@ plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitte
 abline(h = 0, col = "red")
 ```
 
+
 ```{r}
 # Perform Elastic Net regression with cross-validation to select the lambda parameter
 cv.en = cv.glmnet(X_train, y_train, alpha = 0.5)
@@ -554,6 +556,8 @@ cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
+
+
 ```{r}
 coefficients(en_model)
 ```
@@ -572,6 +576,8 @@ qqline(residuals)
 plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
 abline(h = 0, col = "red")
 ```
+
+
 
 ## Conclusions
 
