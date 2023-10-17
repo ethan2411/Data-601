@@ -384,13 +384,13 @@ linearmodel.df
 significant.linearmodel.df = filter(linearmodel.df, p.value < 0.05)
 head(significant.linearmodel.df,22)
 ```
+
 ```{r}
 print(listings[4,])
 linear.predict = predict(linearmodel, data.frame(listings[4,]), interval = 'predict')
 linear.predict
 
 ```
-
 
 ```{r}
 #plots look alright, big upper tail on normaility plot but rest of it is fine i think
@@ -438,7 +438,6 @@ stepwise.predict = predict(model_stepwise, data.frame(listings[4,]), interval = 
 stepwise.predict
 ```
 
-
 ```{r}
 plot(model_stepwise)
 ```
@@ -479,6 +478,20 @@ cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 coefficients(lasso_model)
 ```
 
+```{r}
+# for LASSO
+# Calculate residuals
+residuals = y_test-predictions
+# Normality of Residuals
+# Q-Q Plot
+qqnorm(residuals)
+qqline(residuals)
+
+# Homoscedasticity of Residuals
+# Scatterplot of Residuals vs. Fitted Values
+plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+```
 
 ```{r}
 # Perform Ridge regression with cross-validation to select the lambda parameter
@@ -506,6 +519,21 @@ coefficients(ridge_model)
 ```
 
 ```{r}
+# for Ridge
+# Calculate residuals
+residuals = y_test-predictions
+# Normality of Residuals
+# Q-Q Plot
+qqnorm(residuals)
+qqline(residuals)
+
+# Homoscedasticity of Residuals
+# Scatterplot of Residuals vs. Fitted Values
+plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+```
+
+```{r}
 # Perform Elastic Net regression with cross-validation to select the lambda parameter
 cv.en = cv.glmnet(X_train, y_train, alpha = 0.5)
 
@@ -526,10 +554,23 @@ cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
-
-
 ```{r}
 coefficients(en_model)
+```
+
+```{r}
+# for Elastic Net
+# Calculate residuals
+residuals = y_test-predictions
+# Normality of Residuals
+# Q-Q Plot
+qqnorm(residuals)
+qqline(residuals)
+
+# Homoscedasticity of Residuals
+# Scatterplot of Residuals vs. Fitted Values
+plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
 ```
 
 ## Conclusions
