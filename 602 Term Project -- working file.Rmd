@@ -32,6 +32,8 @@ library(DescTools)
 
 ```{r}
 listings = read.csv("https://raw.githubusercontent.com/ethan2411/Data-601-602/main/listings.csv")
+listings_original = read.csv("https://raw.githubusercontent.com/ethan2411/Data-601-602/main/listings.csv")
+head(listings_original)
 head(listings)
 colnames(listings)
 ```
@@ -206,7 +208,7 @@ for (Neighbourhood in unique_Neighbourhoods) {
   count_diff = length(filtered_data)
   
   # Create a new row for the dataframe
-  new_row = data.frame(Neighbourhood = Neighbourhood, Different = count_diff, Same = 37-count_diff)
+  new_row = data.frame(Neighbourhood = Neighbourhood, Statistically_significant_difference = count_diff, Not_statistically_significant_difference = 37-count_diff)
   
   # Add the new row to the dataframe
   Neighbourhood_diff_df = rbind(Neighbourhood_diff_df, new_row)
@@ -337,10 +339,10 @@ print(unique(listings$host_has_profile_pic))
 ```{r}
 # Split the data into training and testing sets
 
-#set.seed(12)  # For reproducibility
+
 options(scipen = 999) # For Readability
 
-#set.seed(2023)
+
 trainIndex = createDataPartition(listings$price, p = .8, 
                                   list = FALSE, 
                                   times = 1)
@@ -350,6 +352,7 @@ data_test  = listings[-trainIndex,]
 
 ```{r}
 # Fit a linear regression model
+set.seed(123)
 linearmodel = lm(price ~ ., data = data_train)
 summary.linearmodel = summary(linearmodel)
 summary.linearmodel
@@ -386,7 +389,6 @@ print(listings[4,])
 linear.predict = predict(linearmodel, data.frame(listings[4,]), interval = 'predict')
 linear.predict
 
-<<<<<<< HEAD
 ```
 
 
@@ -399,11 +401,26 @@ plot(linearmodel)
 #Using stepwise selection to find the most important variables
 data_train = na.omit(data_train)
 model_stepwise = step(linearmodel, direction = "both")
+
+predictions_step = predict(model_stepwise, newdata = data_test)
+
+
+rmse_value = rmse(predictions_step, data_test$price)
+mse_value = mse(predictions_step, data_test$price)
+mae_value = mae(predictions_step, data_test$price)
+
+# Print the evaluation metrics
+#The N/A's are because there are null values in bathrooms_count
+
 ```
 
 ```{r}
 #Checking the model
 summary(model_stepwise)
+
+cat("Training Mean Squared Error (MSE):", mse_value, "\n")
+cat("Training Root Mean Squared Error (RMSE):", rmse_value, "\n")
+cat("Training Mean Absolute Error (MAE):", mae_value, "\n")
 ```
 
 ```{r}
@@ -462,11 +479,6 @@ cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 coefficients(lasso_model)
 ```
 
-```{r}
-lasso.predict = predict(lasso_model, data.frame(listings[2,]), interval = "predict")
-lasso.predict
-```
-
 
 ```{r}
 # Perform Ridge regression with cross-validation to select the lambda parameter
@@ -513,6 +525,8 @@ cat("Testing Mean Squared Error (MSE):", mse_value, "\n")
 cat("Testing Root Mean Squared Error (RMSE):", rmse_value, "\n")
 cat("Testing Mean Absolute Error (MAE):", mae_value, "\n")
 ```
+
+
 
 ```{r}
 coefficients(en_model)
